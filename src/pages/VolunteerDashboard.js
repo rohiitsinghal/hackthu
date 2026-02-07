@@ -1,10 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
+import Logo from '../components/Logo';
+import logo from '../components/logo.jpeg';
 
-// Enhanced header with mode toggle
+// Enhanced header with mode toggle and logo
 function Header({ user, mode, onModeChange, onLogout }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
-      <div style={{ fontSize: 22, fontWeight: 700, color: '#0f172a' }}>CommuniTree</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* Logo */}
+        <Logo size={32} src={logo} />
+        <div style={{ fontSize: 22, fontWeight: 700, color: '#0f172a' }}>CommuniTree</div>
+      </div>
+      
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         {/* Mode Toggle */}
         <div style={{ display: 'inline-flex', background: '#f3f4f6', borderRadius: 999, padding: 4 }}>
@@ -722,9 +729,8 @@ function UserMenu({ user, onLogout }) {
         onClick={() => setOpen(v => !v)}
         style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', cursor: 'pointer' }}
       >
-        <span style={{ width: 28, height: 28, borderRadius: '50%', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 700, background: 'linear-gradient(135deg,#7C3AED,#3B82F6)' }}>
-          {initial}
-        </span>
+        {/* Replace CT/initial badge with logo */}
+        <Logo size={28} src={logo} />
         <span style={{ color: '#374151', fontWeight: 500 }}>{name}</span>
         <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>

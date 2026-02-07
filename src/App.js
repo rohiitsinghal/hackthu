@@ -1,5 +1,7 @@
 import './App.css';
 import { useState, useEffect } from 'react';
+import Logo from './components/Logo';
+import logo from './components/logo.jpeg'; // add this import
 import LoginNGO from './pages/LoginNGO';
 import LoginVolunteer from './pages/LoginVolunteer';
 import SignupNGO from './pages/SignupNGO'; // NEW: NGO signup page
@@ -24,6 +26,24 @@ function HeartIcon() {
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path d="M12 21s-7-4.35-9.5-7.5C1.2 11.9 2 9 4.5 7.9c2.1-.9 4.1.1 5.1 1.7 1-1.6 3-2.6 5.1-1.7C17 9 17.8 11.9 15.5 13.5 12.9 15.7 12 21 12 21z" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
+  );
+}
+
+// Absolute top-center logo for auth pages (overlays the CT badge position)
+function AuthLogoOverlay() {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 88,            // tweak if needed to align perfectly with the CT badge
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 60,
+        pointerEvents: 'none',
+      }}
+    >
+      <Logo size={72} src={logo} />
+    </div>
   );
 }
 
@@ -59,16 +79,36 @@ function App() {
   };
 
   if (route === '#/login/ngo') {
-    return <LoginNGO onBack={() => (window.location.hash = '#/')} onLogin={(user) => handleLoginSuccess('NGO', user)} />;
+    return (
+      <>
+        <AuthLogoOverlay />
+        <LoginNGO onBack={() => (window.location.hash = '#/')} onLogin={(user) => handleLoginSuccess('NGO', user)} />
+      </>
+    );
   }
   if (route === '#/login/volunteer') {
-    return <LoginVolunteer onBack={() => (window.location.hash = '#/')} onLogin={(user) => handleLoginSuccess('Volunteer', user)} />;
+    return (
+      <>
+        <AuthLogoOverlay />
+        <LoginVolunteer onBack={() => (window.location.hash = '#/')} onLogin={(user) => handleLoginSuccess('Volunteer', user)} />
+      </>
+    );
   }
   if (route === '#/signup/ngo') {
-    return <SignupNGO onBack={() => (window.location.hash = '#/login/ngo')} onCreate={(user) => handleSignupSuccess('NGO', user)} />;
+    return (
+      <>
+        <AuthLogoOverlay />
+        <SignupNGO onBack={() => (window.location.hash = '#/login/ngo')} onCreate={(user) => handleSignupSuccess('NGO', user)} />
+      </>
+    );
   }
   if (route === '#/signup/volunteer') {
-    return <SignupVolunteer onBack={() => (window.location.hash = '#/login/volunteer')} onCreate={(user) => handleSignupSuccess('Volunteer', user)} />;
+    return (
+      <>
+        <AuthLogoOverlay />
+        <SignupVolunteer onBack={() => (window.location.hash = '#/login/volunteer')} onCreate={(user) => handleSignupSuccess('Volunteer', user)} />
+      </>
+    );
   }
   if (route === '#/ngo') {
     return <NGODashboard />;
@@ -85,8 +125,8 @@ function App() {
 
   return (
     <div className="landing">
-      <div className="brand">
-        <span className="brand-badge">CT</span>
+      <div className="brand" style={{ opacity: 0.85 }}>
+        <Logo size={120} className="brand-badge" src={logo} /> {/* pass the imported jpeg */}
       </div>
 
       <h1 className="title">Join CommuniTree</h1>

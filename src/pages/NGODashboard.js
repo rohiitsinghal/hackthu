@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import Logo from '../components/Logo';
+import logo from '../components/logo.jpeg';
 
-// Enhanced header with mode toggle for NGO
+// Enhanced header with mode toggle and logo for NGO
 function NGOHeader({ user, mode, onModeChange, onLogout }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      {/* Logo */}
+      <Logo size={32} src={logo} /> {/* pass the imported jpeg */}
       <span style={{ fontSize: 22, fontWeight: 700 }}>NGO Dashboard</span>
       
       {/* Mode Toggle for NGOs */}
@@ -650,9 +654,8 @@ function NGOUserMenu({ user, onLogout }) {
         onClick={() => setOpen(v => !v)}
         style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', cursor: 'pointer' }}
       >
-        <span style={{ width: 28, height: 28, borderRadius: '50%', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 700, background: 'linear-gradient(135deg,#16A34A,#22C55E)' }}>
-          {initial}
-        </span>
+        {/* Replace CT/initial badge with logo */}
+        <Logo size={28} src={logo} />
         <span style={{ color: '#374151', fontWeight: 500 }}>{name}</span>
         <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>

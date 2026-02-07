@@ -43,6 +43,10 @@ export default function UserDetails({ role }) {
     <div style={{ minHeight: '100vh', background: '#f9fafb', padding: 24 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+        {/* Logo */}
+        <div style={{ width: 28, height: 28, borderRadius: 6, background: 'linear-gradient(135deg, #16A34A, #7C3AED)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: '#fff', fontWeight: 800, fontSize: 14 }}>CT</span>
+        </div>
         <button onClick={goBack} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#16A34A', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14 }}>
           <svg viewBox="0 0 24 24" width="18" height="18"><path d="M15 19l-7-7 7-7" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           Back to Dashboard
