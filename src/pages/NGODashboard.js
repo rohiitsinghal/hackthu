@@ -1,5 +1,51 @@
 import { useEffect, useMemo, useState } from 'react';
 
+// Enhanced header with mode toggle for NGO
+function NGOHeader({ user, mode, onModeChange, onLogout }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <span style={{ fontSize: 22, fontWeight: 700 }}>NGO Dashboard</span>
+      
+      {/* Mode Toggle for NGOs */}
+      <div style={{ display: 'inline-flex', background: '#f3f4f6', borderRadius: 999, padding: 4 }}>
+        <button
+          onClick={() => onModeChange('impact')}
+          style={{
+            padding: '6px 12px', borderRadius: 999, border: 'none',
+            background: mode === 'impact' ? '#16A34A' : 'transparent',
+            color: mode === 'impact' ? '#fff' : '#374151',
+            fontWeight: 600, cursor: 'pointer', fontSize: 12,
+          }}
+        >
+          Impact Mode
+        </button>
+        <button
+          onClick={() => onModeChange('grow')}
+          style={{
+            padding: '6px 12px', borderRadius: 999, border: 'none',
+            background: mode === 'grow' ? '#7C3AED' : 'transparent',
+            color: mode === 'grow' ? '#fff' : '#374151',
+            fontWeight: 600, cursor: 'pointer', fontSize: 12,
+          }}
+        >
+          Grow Mode
+        </button>
+      </div>
+
+      {/* Read-only org info from signup */}
+      {user && (
+        <span style={{ padding: '4px 10px', borderRadius: 999, background: '#ECFDF5', color: '#16A34A', fontSize: 12 }}>
+          {user.orgName} {user.darpanId ? `• Darpan ${user.darpanId}` : ''} {user.email ? `• ${user.email}` : ''}
+        </span>
+      )}
+      
+      <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+        <NGOUserMenu user={user} onLogout={onLogout} />
+      </div>
+    </div>
+  );
+}
+
 export default function NGODashboard() {
   const auth = useMemo(() => {
     try { return JSON.parse(localStorage.getItem('ct_auth') || 'null'); } catch { return null; }
@@ -46,11 +92,13 @@ export default function NGODashboard() {
     'General',
   ];
 
-  // Load my listings (filter by orgName if provided, else show all NGO listings)
+  // Load only my listings (filter by current NGO's email)
   useEffect(() => {
-    const all = JSON.parse(localStorage.getItem('ct_ngo_listings') || '[]');
-    setListings(all.filter(l => l.ownerRole === 'NGO'));
-  }, []);
+    if (account?.email) {
+      const all = JSON.parse(localStorage.getItem('ct_ngo_listings') || '[]');
+      setListings(all.filter(l => l.orgEmail === account.email));
+    }
+  }, [account]);
 
   const toggleType = (t) => {
     setTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
@@ -80,9 +128,10 @@ export default function NGODashboard() {
       description: desc,
       createdAt: Date.now(),
     };
-    const next = [item, ...all];
-    localStorage.setItem('ct_ngo_listings', JSON.stringify(next));
-    setListings(next.filter(l => l.ownerRole === 'NGO'));
+    const nextAll = [...all, item];
+    localStorage.setItem('ct_ngo_listings', JSON.stringify(nextAll));
+    // Show only current NGO's listings
+    setListings(nextAll.filter(l => l.orgEmail === account.email));
     // Reset inputs back to blank
     setTypes(['Child Welfare']);
     setHaveVolunteers('');
@@ -94,7 +143,8 @@ export default function NGODashboard() {
     const all = JSON.parse(localStorage.getItem('ct_ngo_listings') || '[]');
     const next = all.filter(l => l.id !== id);
     localStorage.setItem('ct_ngo_listings', JSON.stringify(next));
-    setListings(next.filter(l => l.ownerRole === 'NGO'));
+    // Show only current NGO's listings
+    setListings(next.filter(l => l.orgEmail === account.email));
   };
 
   // Add: logout handler
@@ -103,21 +153,39 @@ export default function NGODashboard() {
     window.location.hash = '#/';
   };
 
+  const [mode, setMode] = useState('impact'); // Add missing mode state
+
   return (
     <div style={{ minHeight: '100vh', padding: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ fontSize: 22, fontWeight: 700 }}>NGO Dashboard</span>
-        {/* Read-only org info from signup */}
-        {account && (
-          <span style={{ padding: '4px 10px', borderRadius: 999, background: '#ECFDF5', color: '#16A34A', fontSize: 12 }}>
-            {account.orgName} {account.darpanId ? `• Darpan ${account.darpanId}` : ''} {account.email ? `• ${account.email}` : ''}
-          </span>
-        )}
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          <NGOUserMenu user={account} onLogout={logout} />
-        </div>
-      </div>
+      <NGOHeader user={account} mode={mode} onModeChange={setMode} onLogout={logout} />
 
+      {mode === 'impact' ? (
+        <ImpactModeNGO 
+          account={account}
+          types={types}
+          haveVolunteers={haveVolunteers}
+          needVolunteers={needVolunteers}
+          description={description}
+          listings={listings}
+          ALL_TYPES={ALL_TYPES}
+          toggleType={toggleType}
+          setHaveVolunteers={setHaveVolunteers}
+          setNeedVolunteers={setNeedVolunteers}
+          setDescription={setDescription}
+          publish={publish}
+          remove={remove}
+        />
+      ) : (
+        <GrowModeShared user={account} userType="NGO" />
+      )}
+    </div>
+  );
+}
+
+// Impact Mode for NGOs (existing functionality)
+function ImpactModeNGO({ account, types, haveVolunteers, needVolunteers, description, listings, ALL_TYPES, toggleType, setHaveVolunteers, setNeedVolunteers, setDescription, publish, remove }) {
+  return (
+    <>
       <div style={{ marginTop: 16, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, display: 'grid', gap: 12 }}>
         <div style={{ fontWeight: 700 }}>Publish your NGO listing</div>
         {/* Removed editable Organization Name input; it’s now fetched from signup */}
@@ -180,6 +248,341 @@ export default function NGODashboard() {
           <div style={{ color: '#6b7280' }}>No listings published yet.</div>
         )}
       </div>
+    </>
+  );
+}
+
+// Shared Grow Mode for both NGOs and Volunteers
+function GrowModeShared({ user, userType }) {
+  const [activeTab, setActiveTab] = useState('communities');
+  const [communities, setCommunities] = useState([]);
+
+  // Load communities from localStorage (shared between NGOs and Volunteers)
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('ct_communities') || '[]');
+    if (stored.length === 0) {
+      // Initialize with sample data if none exists
+      const sampleCommunities = [
+        {
+          id: 1,
+          name: 'Green Mumbai Initiative',
+          mission: 'Building sustainable communities through local environmental action',
+          members: 156,
+          pulse: 'High',
+          createdBy: { type: 'Volunteer', name: 'Priya Sharma' },
+          nextMeetup: { date: '2024-01-15', time: '6:00 PM', venue: 'Community Center, Bandra' },
+          activities: ['Tree Plantation', 'Waste Cleanup', 'Awareness Drives'],
+          createdAt: Date.now() - 86400000, // 1 day ago
+        },
+        {
+          id: 2,
+          name: 'Tech for Good Delhi',
+          mission: 'Leveraging technology to solve social problems in our city',
+          members: 89,
+          pulse: 'Medium',
+          createdBy: { type: 'NGO', name: 'Digital India Foundation' },
+          nextMeetup: { date: '2024-01-20', time: '7:00 PM', venue: 'Online & Select City Mall' },
+          activities: ['Code for Cause', 'Digital Literacy', 'App Development'],
+          createdAt: Date.now() - 172800000, // 2 days ago
+        },
+      ];
+      localStorage.setItem('ct_communities', JSON.stringify(sampleCommunities));
+      setCommunities(sampleCommunities);
+    } else {
+      setCommunities(stored);
+    }
+  }, []);
+
+  return (
+    <>
+      <div style={{ marginTop: 16, display: 'grid', gap: 2 }}>
+        <span style={{ fontSize: 22, fontWeight: 700 }}>Grow Mode: The Community Engine</span>
+        <span style={{ color: '#6b7280' }}>Connect with like-minded locals and build movements</span>
+      </div>
+
+      <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
+        <button
+          onClick={() => setActiveTab('communities')}
+          style={{
+            padding: '8px 16px', borderRadius: 8, border: '1px solid #e5e7eb',
+            background: activeTab === 'communities' ? '#7C3AED' : '#fff',
+            color: activeTab === 'communities' ? '#fff' : '#374151',
+            cursor: 'pointer', fontWeight: 600,
+          }}
+        >
+          Community Profiles
+        </button>
+        <button
+          onClick={() => setActiveTab('meetups')}
+          style={{
+            padding: '8px 16px', borderRadius: 8, border: '1px solid #e5e7eb',
+            background: activeTab === 'meetups' ? '#7C3AED' : '#fff',
+            color: activeTab === 'meetups' ? '#fff' : '#374151',
+            cursor: 'pointer', fontWeight: 600,
+          }}
+        >
+          Upcoming Meetups
+        </button>
+        <button
+          onClick={() => setActiveTab('create')}
+          style={{
+            padding: '8px 16px', borderRadius: 8, border: '1px solid #e5e7eb',
+            background: activeTab === 'create' ? '#7C3AED' : '#fff',
+            color: activeTab === 'create' ? '#fff' : '#374151',
+            cursor: 'pointer', fontWeight: 600,
+          }}
+        >
+          Create Community
+        </button>
+      </div>
+
+      {activeTab === 'communities' ? (
+        <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(2, minmax(320px, 1fr))', gap: 16 }}>
+          {communities.map(community => (
+            <CommunityCard key={community.id} community={community} />
+          ))}
+        </div>
+      ) : activeTab === 'meetups' ? (
+        <MeetupsList communities={communities} />
+      ) : (
+        <CreateCommunity 
+          user={user} 
+          userType={userType} 
+          communities={communities} 
+          setCommunities={setCommunities}
+          setActiveTab={setActiveTab}
+        />
+      )}
+    </>
+  );
+}
+
+// Create Community component
+function CreateCommunity({ user, userType, communities, setCommunities, setActiveTab }) {
+  const [name, setName] = useState('');
+  const [mission, setMission] = useState('');
+  const [activities, setActivities] = useState([]);
+  const [newActivity, setNewActivity] = useState('');
+
+  const activityOptions = [
+    'Tree Plantation', 'Waste Cleanup', 'Awareness Drives', 'Code for Cause', 
+    'Digital Literacy', 'App Development', 'Food Distribution', 'Education Support',
+    'Healthcare Camps', 'Skill Development', 'Art & Culture', 'Sports & Fitness'
+  ];
+
+  const addActivity = () => {
+    if (newActivity.trim() && !activities.includes(newActivity.trim())) {
+      setActivities([...activities, newActivity.trim()]);
+      setNewActivity('');
+    }
+  };
+
+  const createCommunity = () => {
+    if (!name.trim() || !mission.trim() || activities.length === 0) {
+      alert('Please fill all fields and add at least one activity.');
+      return;
+    }
+
+    const newCommunity = {
+      id: Date.now(),
+      name: name.trim(),
+      mission: mission.trim(),
+      members: 1,
+      pulse: 'New',
+      createdBy: { 
+        type: userType, 
+        name: userType === 'NGO' ? user?.orgName : user?.fullName || 'Anonymous'
+      },
+      activities,
+      createdAt: Date.now(),
+    };
+
+    const updated = [...communities, newCommunity];
+    setCommunities(updated);
+    localStorage.setItem('ct_communities', JSON.stringify(updated));
+    
+    setName(''); setMission(''); setActivities([]); setNewActivity('');
+    setActiveTab('communities');
+  };
+
+  return (
+    <div style={{ marginTop: 16, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 20 }}>
+      <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Create New Community</div>
+      
+      <div style={{ display: 'grid', gap: 16 }}>
+        <div>
+          <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+            Community Name
+          </label>
+          <input
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="e.g., Clean Bangalore Initiative"
+            style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: 8 }}
+          />
+        </div>
+
+        <div>
+          <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+            Mission Statement
+          </label>
+          <textarea
+            value={mission}
+            onChange={e => setMission(e.target.value)}
+            rows={3}
+            placeholder="Describe what your community aims to achieve..."
+            style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: 8 }}
+          />
+        </div>
+
+        <div>
+          <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+            Activities
+          </label>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <input
+              value={newActivity}
+              onChange={e => setNewActivity(e.target.value)}
+              placeholder="Add an activity..."
+              style={{ flex: 1, padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6 }}
+              onKeyPress={e => e.key === 'Enter' && addActivity()}
+            />
+            <button
+              onClick={addActivity}
+              style={{ padding: '8px 12px', borderRadius: 6, border: 'none', background: '#7C3AED', color: '#fff', fontWeight: 600 }}
+            >
+              Add
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+            {activityOptions.map(activity => (
+              <button
+                key={activity}
+                onClick={() => !activities.includes(activity) && setActivities([...activities, activity])}
+                style={{
+                  padding: '4px 8px', borderRadius: 999, border: '1px solid #e5e7eb',
+                  background: activities.includes(activity) ? '#EDE9FE' : '#fff',
+                  color: activities.includes(activity) ? '#7C3AED' : '#6b7280',
+                  fontSize: 12, cursor: 'pointer'
+                }}
+                disabled={activities.includes(activity)}
+              >
+                {activity}
+              </button>
+            ))}
+          </div>
+          {activities.length > 0 && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {activities.map(activity => (
+                <span key={activity} style={{ padding: '2px 8px', borderRadius: 999, background: '#EDE9FE', color: '#7C3AED', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  {activity}
+                  <button
+                    onClick={() => setActivities(activities.filter(a => a !== activity))}
+                    style={{ background: 'none', border: 'none', color: '#7C3AED', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => setActiveTab('communities')}
+            style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', color: '#374151', cursor: 'pointer' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={createCommunity}
+            style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#7C3AED', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
+          >
+            Create Community
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Reuse community components from VolunteerDashboard
+function CommunityCard({ community }) {
+  const [rsvped, setRsvped] = useState(false);
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 16 }}>{community.name}</div>
+          <div style={{ color: '#6b7280', fontSize: 13, marginTop: 4 }}>
+            {community.members} members • Created by {community.createdBy?.name} ({community.createdBy?.type})
+          </div>
+        </div>
+        <span style={{
+          padding: '4px 8px', borderRadius: 999, fontSize: 11, fontWeight: 600,
+          background: community.pulse === 'High' ? '#DCFCE7' : community.pulse === 'Medium' ? '#FEF3C7' : '#F3F4F6',
+          color: community.pulse === 'High' ? '#16A34A' : community.pulse === 'Medium' ? '#B45309' : '#6b7280'
+        }}>
+          {community.pulse} Activity
+        </span>
+      </div>
+
+      <div style={{ color: '#374151', fontSize: 14, marginBottom: 12 }}>{community.mission}</div>
+
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+        {community.activities.map(activity => (
+          <span key={activity} style={{ padding: '2px 8px', borderRadius: 999, background: '#EDE9FE', color: '#7C3AED', fontSize: 11 }}>
+            {activity}
+          </span>
+        ))}
+      </div>
+
+      {community.nextMeetup && (
+        <div style={{ background: '#f8fafc', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+          <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>Next Meetup</div>
+          <div style={{ fontSize: 12, color: '#374151' }}>
+            {community.nextMeetup.date} • {community.nextMeetup.time}<br />
+            📍 {community.nextMeetup.venue}
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={() => setRsvped(!rsvped)}
+        style={{
+          width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none',
+          background: rsvped ? '#16A34A' : '#7C3AED', color: '#fff',
+          fontWeight: 600, cursor: 'pointer'
+        }}
+      >
+        {rsvped ? 'RSVP Confirmed ✓' : 'RSVP for Meetup'}
+      </button>
+    </div>
+  );
+}
+
+function MeetupsList({ communities }) {
+  return (
+    <div style={{ marginTop: 16, display: 'grid', gap: 16 }}>
+      {communities.filter(c => c.nextMeetup).map(community => (
+        <div key={community.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 18 }}>{community.name} Meetup</div>
+              <div style={{ color: '#6b7280', marginTop: 4 }}>{community.mission}</div>
+              <div style={{ marginTop: 12, fontSize: 14 }}>
+                📅 {community.nextMeetup.date} • 🕕 {community.nextMeetup.time}<br />
+                📍 {community.nextMeetup.venue}
+              </div>
+            </div>
+            <button style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: '#7C3AED', color: '#fff', fontWeight: 600 }}>
+              RSVP
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
