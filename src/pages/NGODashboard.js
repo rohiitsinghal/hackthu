@@ -97,6 +97,12 @@ export default function NGODashboard() {
     setListings(next.filter(l => l.ownerRole === 'NGO'));
   };
 
+  // Add: logout handler
+  const logout = () => {
+    localStorage.removeItem('ct_auth');
+    window.location.hash = '#/';
+  };
+
   return (
     <div style={{ minHeight: '100vh', padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -107,7 +113,9 @@ export default function NGODashboard() {
             {account.orgName} {account.darpanId ? `• Darpan ${account.darpanId}` : ''} {account.email ? `• ${account.email}` : ''}
           </span>
         )}
-        <a href="#/" style={{ marginLeft: 'auto', color: '#16A34A', textDecoration: 'none', fontSize: 14 }}>Back</a>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <NGOUserMenu user={account} onLogout={logout} />
+        </div>
       </div>
 
       <div style={{ marginTop: 16, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, display: 'grid', gap: 12 }}>
@@ -213,4 +221,56 @@ function randomId() {
   } catch {
     return 'id_' + Math.random().toString(36).slice(2);
   }
+}
+
+function NGOUserMenu({ user, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const name = (user?.orgName || 'NGO').trim();
+  const email = user?.email || '—';
+  const initial = name ? name[0].toUpperCase() : 'N';
+
+  useEffect(() => {
+    const close = (e) => {
+      if (!e.target.closest?.('.ngo-user-menu-root')) setOpen(false);
+    };
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, []);
+
+  const viewProfile = () => {
+    window.location.hash = '#/profile/ngo';
+  };
+
+  return (
+    <div className="ngo-user-menu-root" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', cursor: 'pointer' }}
+      >
+        <span style={{ width: 28, height: 28, borderRadius: '50%', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 700, background: 'linear-gradient(135deg,#16A34A,#22C55E)' }}>
+          {initial}
+        </span>
+        <span style={{ color: '#374151', fontWeight: 500 }}>{name}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </button>
+
+      {open && (
+        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 260, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.08)', padding: 12 }}>
+          <div style={{ display: 'grid', gap: 8 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Quick Info</div>
+            <div style={{ fontSize: 13, color: '#374151' }}>Organization: <span style={{ color: '#111827' }}>{name}</span></div>
+            <div style={{ fontSize: 13, color: '#374151' }}>Email: <span style={{ color: '#111827' }}>{email}</span></div>
+          </div>
+          <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+            <button onClick={viewProfile} style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#374151', cursor: 'pointer', fontSize: 13 }}>
+              User Details
+            </button>
+            <button onClick={onLogout} style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', color: '#374151', cursor: 'pointer', fontSize: 13 }}>
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

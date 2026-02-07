@@ -8,7 +8,7 @@ export default function LoginVolunteer({ onBack, onLogin }) {
   const handleSubmit = () => {
     const users = JSON.parse(localStorage.getItem('ct_volunteer_users') || '[]');
     const found = users.find(u => u.email === email && u.password === password);
-    if (found) { setErr(''); onLogin(); } else { setErr('Invalid email or password'); }
+    if (found) { setErr(''); onLogin(found); } else { setErr('Invalid email or password'); }
   };
 
   return (

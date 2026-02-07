@@ -6,6 +6,7 @@ import SignupNGO from './pages/SignupNGO'; // NEW: NGO signup page
 import SignupVolunteer from './pages/SignupVolunteer'; // NEW: Volunteer signup page
 import NGODashboard from './pages/NGODashboard';
 import VolunteerDashboard from './pages/VolunteerDashboard'; // NEW
+import UserDetails from './pages/UserDetails'; // NEW: User profile page
 
 function NGOIcon() {
   return (
@@ -35,33 +36,51 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  const handleLoginSuccess = (role) => {
-    localStorage.setItem('ct_auth', JSON.stringify({ role }));
+  // Resolve latest user email for a given role (fallback if login pages don't pass the user)
+  const resolveUserEmailForRole = (role) => {
+    try {
+      const key = role === 'NGO' ? 'ct_ngo_users' : 'ct_volunteer_users';
+      const users = JSON.parse(localStorage.getItem(key) || '[]');
+      const last = users[users.length - 1];
+      return last?.email || null;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleLoginSuccess = (role, user) => {
+    localStorage.setItem('ct_auth', JSON.stringify({ role, userEmail: user?.email || null }));
     window.location.hash = role === 'NGO' ? '#/ngo' : '#/volunteer';
   };
 
-  const handleSignupSuccess = (role) => {
-    localStorage.setItem('ct_auth', JSON.stringify({ role }));
+  const handleSignupSuccess = (role, user) => {
+    localStorage.setItem('ct_auth', JSON.stringify({ role, userEmail: user?.email || null }));
     window.location.hash = role === 'NGO' ? '#/ngo' : '#/volunteer';
   };
 
   if (route === '#/login/ngo') {
-    return <LoginNGO onBack={() => (window.location.hash = '#/')} onLogin={() => handleLoginSuccess('NGO')} />;
+    return <LoginNGO onBack={() => (window.location.hash = '#/')} onLogin={(user) => handleLoginSuccess('NGO', user)} />;
   }
   if (route === '#/login/volunteer') {
-    return <LoginVolunteer onBack={() => (window.location.hash = '#/')} onLogin={() => handleLoginSuccess('Volunteer')} />;
+    return <LoginVolunteer onBack={() => (window.location.hash = '#/')} onLogin={(user) => handleLoginSuccess('Volunteer', user)} />;
   }
   if (route === '#/signup/ngo') {
-    return <SignupNGO onBack={() => (window.location.hash = '#/login/ngo')} onCreate={() => handleSignupSuccess('NGO')} />;
+    return <SignupNGO onBack={() => (window.location.hash = '#/login/ngo')} onCreate={(user) => handleSignupSuccess('NGO', user)} />;
   }
   if (route === '#/signup/volunteer') {
-    return <SignupVolunteer onBack={() => (window.location.hash = '#/login/volunteer')} onCreate={() => handleSignupSuccess('Volunteer')} />;
+    return <SignupVolunteer onBack={() => (window.location.hash = '#/login/volunteer')} onCreate={(user) => handleSignupSuccess('Volunteer', user)} />;
   }
   if (route === '#/ngo') {
     return <NGODashboard />;
   }
   if (route === '#/volunteer') {
     return <VolunteerDashboard />;
+  }
+  if (route === '#/profile/ngo') {
+    return <UserDetails role="NGO" />;
+  }
+  if (route === '#/profile/volunteer') {
+    return <UserDetails role="Volunteer" />;
   }
 
   return (

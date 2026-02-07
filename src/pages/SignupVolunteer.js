@@ -3,6 +3,7 @@ import { useState } from 'react';
 export default function SignupVolunteer({ onBack, onCreate }) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [aadhaarNo, setAadhaarNo] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [err, setErr] = useState('');
@@ -12,6 +13,7 @@ export default function SignupVolunteer({ onBack, onCreate }) {
   const validate = () => {
     if (!fullName.trim()) return 'Full Name is required';
     if (!/^\S+@\S+\.\S+$/.test(email)) return 'Enter a valid email';
+    if (!/^\d{12}$/.test(aadhaarNo)) return 'Aadhaar Number must be 12 digits';
     if (password.length < 8) return 'Password must be at least 8 characters';
     if (password !== confirm) return 'Passwords do not match';
     return '';
@@ -23,10 +25,10 @@ export default function SignupVolunteer({ onBack, onCreate }) {
     const key = 'ct_volunteer_users';
     const users = JSON.parse(localStorage.getItem(key) || '[]');
     if (users.some(u => u.email === email)) { setErr('An account with this email already exists'); return; }
-    const user = { fullName, email, password, createdAt: Date.now() };
+    const user = { fullName, email, aadhaarNo, password, createdAt: Date.now() };
     localStorage.setItem(key, JSON.stringify([...users, user]));
     setErr('');
-    onCreate(); // parent handles auth + routing
+    onCreate(user); // pass user to App
   };
 
   return (
@@ -78,6 +80,20 @@ export default function SignupVolunteer({ onBack, onCreate }) {
             />
             <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}>
               <svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor" strokeWidth="1.8"/><path d="M4 8l8 5 8-5" fill="none" stroke="currentColor" strokeWidth="1.8"/></svg>
+            </span>
+          </div>
+
+          <label style={{ fontSize: 14, color: '#374151' }}>Aadhaar Number</label>
+          <div style={{ position: 'relative' }}>
+            <input
+              value={aadhaarNo}
+              onChange={e => setAadhaarNo(e.target.value)}
+              inputMode="numeric"
+              placeholder="Enter your 12-digit Aadhaar number"
+              style={{ width: '100%', padding: '12px 14px 12px 40px', border: '1px solid #e5e7eb', borderRadius: 10 }}
+            />
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" strokeWidth="1.8"/><polyline points="14,2 14,8 20,8" fill="none" stroke="currentColor" strokeWidth="1.8"/></svg>
             </span>
           </div>
 
